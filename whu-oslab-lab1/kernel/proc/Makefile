@@ -1,7 +1,7 @@
 include ../../common.mk
 
 # 源文件 (暂时只编译空的目标文件，因为这些是TODO)
-SRCS = 
+SRCS = proc.c
 OBJS = $(SRCS:.c=.o)
 
 .PHONY: build clean

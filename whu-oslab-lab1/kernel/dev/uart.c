@@ -21,9 +21,10 @@ void uart_putc_sync(int c) {
     uart_base[UART_THR] = c;
 }
 
-void uart_putc(char c) {
+void uart_putc(int c) {
     uart_putc_sync(c);
 }
+
 
 void uart_puts(const char *s) {
     while (*s) {

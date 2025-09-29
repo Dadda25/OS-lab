@@ -4,7 +4,7 @@
 #include "dev/uart.h"
 
 // 声明 main 函数
-void main(void);
+extern void main(void);
 
 void start(int cpu_id) {
     // Initialize UART (only CPU 0 does this)
@@ -22,10 +22,11 @@ void start(int cpu_id) {
         uart_puts("cpu 1 is booting!\n");
     }
     
-    // Call main function (only CPU 0 continues to main)
-    if (cpu_id == 0) {
-        main();
-    }
+    // 把 CPU ID 写进 tp（线程指针寄存器），方便 main() 里用 r_tp() 取
+    w_tp(cpu_id);
+
+    // 所有 CPU 都进入 main
+    main();
     
     // Other CPUs just wait
     while (1) {

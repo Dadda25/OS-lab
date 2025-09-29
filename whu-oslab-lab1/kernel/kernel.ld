@@ -10,6 +10,7 @@ SECTIONS
 
     .text : {
         *(.text .text.*)
+        etext = .;     /* 代码段结束 */
     }
 
     .rodata : {
@@ -30,7 +31,19 @@ SECTIONS
         _bss_end = .;
     }
 
-    _end = .;
+    /*
+     * trampoline 代码段（放在最后，页表切换时使用）
+     */
+    .trampoline : {
+        . = ALIGN(4096);   /* 页面对齐 */
+        trampoline = .;
+        *(.trampoline)
+    }
+
+    /*
+     * 内核结束地址
+     */
+    end = .;
 
     /DISCARD/ : {
         *(.comment)

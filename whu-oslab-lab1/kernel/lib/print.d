@@ -1,6 +1,6 @@
-start.o: start.c ../../include/common.h \
+print.o: print.c /usr/lib/gcc-cross/riscv64-linux-gnu/11/include/stdarg.h \
  /usr/lib/gcc-cross/riscv64-linux-gnu/11/include/stdbool.h \
+ ../../include/lib/print.h ../../include/common.h \
  /usr/lib/gcc-cross/riscv64-linux-gnu/11/include/stdint.h \
  /usr/lib/gcc-cross/riscv64-linux-gnu/11/include/stdint-gcc.h \
- ../../include/riscv.h ../../include/common.h ../../include/memlayout.h \
- ../../include/dev/uart.h
+ ../../include/lib/lock.h ../../include/dev/uart.h

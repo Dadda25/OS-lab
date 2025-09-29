@@ -1,8 +1,9 @@
 # Boot loader for RISC-V
-# Entry point for both CPU cores
+# Entry point for all CPU cores
 
 .section .text
 .global _entry
+.global trampoline   # 声明符号，保证能被 C 代码引用
 
 _entry:
     # Get CPU ID from mhartid CSR
