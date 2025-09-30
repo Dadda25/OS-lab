@@ -1,0 +1,1 @@
+trampoline.o: trampoline.S
