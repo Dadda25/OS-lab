@@ -85,20 +85,16 @@ int map_pages(pgtbl_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
     uint64 a = PGROUNDDOWN(va);
     uint64 last = PGROUNDDOWN(va + size - 1);
 
-    for (;; ) {
+    for (; a <= last; a += PGSIZE, pa += PGSIZE) {
         pte_t *pte = walk(pagetable, a, 1);
         if (!pte) return -1;
 
         if (*pte & PTE_V) {
-            // 已有映射，冲突
-            printf("map_pages: remap va 0x%lx\n", a);
+            // 可以选择覆盖或忽略，不再重复打印
+            //printf("map_pages: remap va 0x%lx (overwrite)\n", a);
         }
 
         *pte = PA2PTE(pa) | perm | PTE_V;
-
-        if (a == last) break;   // 用 == 更清晰
-        a += PGSIZE;
-        pa += PGSIZE;
     }
     return 0;
 }

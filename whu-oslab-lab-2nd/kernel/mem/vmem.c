@@ -4,6 +4,7 @@
 #include "dev/uart.h"
 #include "riscv.h"
 #include "memlayout.h"
+#include "lib/print.h"
 
 // static pgtbl_t kernel_pgtbl = 0;
 
@@ -86,12 +87,12 @@ void vm_print(pgtbl_t pgtbl)
     for (int i = 0; i < 512; i++) {
         pte_t pte = pgtbl[i];
         if (pte & PTE_V) {
-            uart_puts("[vmem] L2 entry: index=");
-            // 这里可以用你实现的 uart_putd 打印 i
-            uart_puts("\n");
+            // 输出索引和对应的 PTE 值
+            printf("[vmem] L2 entry: index=%d, PTE=0x%lx\n", i, pte);
         }
     }
 }
+
 
 // void kvm_init()
 // {

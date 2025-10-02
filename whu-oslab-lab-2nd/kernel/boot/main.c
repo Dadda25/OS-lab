@@ -2,77 +2,56 @@
 #include "dev/uart.h"
 #include "common.h"
 #include "mem/pmem.h"
+#include "mem/kvm.h"
 #include "lib/str.h"
 #include "lib/print.h"
-#include "mem/kvm.h"   // 声明 kvminithart
 
 volatile static int started = 0;
-volatile static int over_1 = 0, over_2 = 0;
 
-static int* mem[1024];
+#define TEST_MEM_PAGES 5
+uint64 mem[TEST_MEM_PAGES];
 
 void main(void)
 {
     int cpuid = r_tp();
 
     if (cpuid == 0) {
-        uart_puts("=== CPU 0 starting ===\n");
+        print_init();
         pmem_init();
+        kvminit();       // 创建 kernel_pagetable 并完成映射
+        kvminithart();   // 启用分页
 
         printf("cpu %d is booting!\n", cpuid);
         __sync_synchronize();
         started = 1;
 
-        // CPU0 分配前 512 页
-        for (int i = 0; i < 512; i++) {
-            mem[i] = (int*)pmem_alloc(true);
-            memset(mem[i], 1, PGSIZE);
-        }
-        printf("cpu %d alloc over\n", cpuid);
-        over_1 = 1;
+        // 分配测试用内存页
+        pgtbl_t test_pgtbl = create_pagetable();
+        for (int i = 0; i < TEST_MEM_PAGES; i++)
+            mem[i] = (uint64)pmem_alloc(true);
 
-        // 等待 CPU1 分配完
-        while (over_1 == 0 || over_2 == 0)
-            ;
+        printf("\ntest-1\n\n");    
+        vm_mappages(test_pgtbl, 0, mem[0], PGSIZE, PTE_R);
+        vm_mappages(test_pgtbl, PGSIZE * 10, mem[1], PGSIZE / 2, PTE_R | PTE_W);
+        vm_mappages(test_pgtbl, PGSIZE * 512, mem[2], PGSIZE - 1, PTE_R | PTE_X);
+        vm_mappages(test_pgtbl, PGSIZE * 512 * 512, mem[3], PGSIZE, PTE_R | PTE_X);
+        vm_mappages(test_pgtbl, MAXVA - PGSIZE, mem[4], PGSIZE, PTE_W);
+        vm_print(test_pgtbl);
 
-        // 释放前 512 页
-        for (int i = 0; i < 512; i++) {
-            pmem_free((uint64)mem[i], true);
-        }
-        printf("cpu %d free over\n", cpuid);
-
-        // 🔹启用虚拟内存
-        printf("Before VM: &main = %p\n", main);
-        kvminithart();  // 开启分页
-        printf("After  VM: &main = %p\n", main);
+        printf("\ntest-2\n\n");    
+        vm_mappages(test_pgtbl, 0, mem[0], PGSIZE, PTE_W);
+        vm_unmappages(test_pgtbl, PGSIZE * 10, PGSIZE, true);
+        vm_unmappages(test_pgtbl, PGSIZE * 512, PGSIZE, true);
+        vm_print(test_pgtbl);
 
     } else {
-        while (started == 0)
-            ; // 等待 CPU0 初始化完成
+        // CPU1 等待 CPU0 初始化完成
+        while (started == 0);
         __sync_synchronize();
-
         printf("cpu %d is booting!\n", cpuid);
-
-        // CPU1 分配后 512 页
-        for (int i = 512; i < 1024; i++) {
-            mem[i] = (int*)pmem_alloc(true);
-            memset(mem[i], 1, PGSIZE);
-        }
-        printf("cpu %d alloc over\n", cpuid);
-        over_2 = 1;
-
-        // 等待 CPU0 分配完
-        while (over_1 == 0 || over_2 == 0)
-            ;
-
-        // 释放后 512 页
-        for (int i = 512; i < 1024; i++) {
-            pmem_free((uint64)mem[i], true);
-        }
-        printf("cpu %d free over\n", cpuid);
     }
 
-    // 不退出，继续等待
+    // 不退出，保持 CPU 等待
     while (1) {
         wfi();
     }
