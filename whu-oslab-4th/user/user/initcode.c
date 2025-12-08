@@ -1,8 +1,3 @@
-// 第一个进程的内容
-// 针对比赛要求逐个运行测试用例
-// 这个文件参考了全年的二等奖作品: AVX 来自华中科技大学
-// https://gitlab.eduxiji.net/202310487101114/oskernel2023-avx
-
 #include "include/sys.h"
 
 typedef struct {
